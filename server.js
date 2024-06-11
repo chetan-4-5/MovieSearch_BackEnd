@@ -13,7 +13,7 @@ app.use('/api/users', users);
 app.use('/api/playlists', playlists);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/movie-search', { 
+mongoose.connect(process.env.MONGODB_URI, { 
     useNewUrlParser: true, 
     useUnifiedTopology: true 
 })
