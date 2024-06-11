@@ -7,7 +7,12 @@ const users = require('./routes/userRoutes');
 const playlists = require('./routes/playlists');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    "origin":"https://movie-search-front-end-xi.vercel.app",
+    "methods":["GET","POST"],
+    "credentials":"true"
+
+}));
 app.use(bodyParser.json());
 app.use('/api/users', users);
 app.use('/api/playlists', playlists);
@@ -23,6 +28,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 .catch((error) => {
     console.error('MongoDB connection error:', error);
 });
+
 
 // Handle errors if MongoDB connection fails
 mongoose.connection.on('error', (err) => {
