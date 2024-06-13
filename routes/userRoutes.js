@@ -10,7 +10,7 @@ router.post('/login', authUser);
 router.get('/user', authMiddleware, async (req, res) => {
     try {
         // Fetch user data based on authenticated user (req.user.id)
-        const user = await User.findById(req.user.id).select('-password');
+        const user = req.user.id;
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
