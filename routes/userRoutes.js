@@ -3,7 +3,7 @@ const express = require('express');
 const { registerUser, authUser } = require('../controllers/userController');
 const router = express.Router();
 const { getUserById } = require('../controllers/userController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/auth');
 
 router.get('/user', protect, getUserById);
 module.exports = router;
