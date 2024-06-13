@@ -2,7 +2,6 @@ const authMiddleware = require('../middleware/auth');
 const express = require('express');
 const axios = require('axios');
 const router = express.Router();
-
 const Playlist = require('../models/Playlist');
 
 // Add movie to public playlist
@@ -10,6 +9,8 @@ router.post('/public/add/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params; // Movie ID
         const userId = req.user.id; // User ID from auth middleware
+
+        console.log(`Adding movie ID ${id} to public playlist for user ${userId}`);
 
         // Fetch movie details from OMDB API
         const movieResponse = await axios.get(`https://www.omdbapi.com/?apikey=6f1b1840&i=${id}`);
@@ -22,6 +23,8 @@ router.post('/public/add/:id', authMiddleware, async (req, res) => {
             title: movieResponse.data.Title,
             poster: movieResponse.data.Poster
         };
+
+        console.log('Movie details fetched:', movie);
 
         // Find the public playlist
         let playlist = await Playlist.findOne({ userId, isPublic: true });
@@ -42,6 +45,8 @@ router.post('/public/add/:id', authMiddleware, async (req, res) => {
             playlist.movies.push(movie);
         }
 
+        console.log('Saving playlist:', playlist);
+
         await playlist.save();
         res.json(playlist);
     } catch (err) {
@@ -53,7 +58,9 @@ router.post('/public/add/:id', authMiddleware, async (req, res) => {
 // Fetch public playlists
 router.get('/public', async (req, res) => {
     try {
-        const playlists = await Playlist.find({ public: true }).populate('userId', 'username').populate('movies');
+        console.log('Fetching public playlists');
+        const playlists = await Playlist.find({ isPublic: true }).populate('userId', 'username').populate('movies');
+        console.log('Public playlists fetched:', playlists);
         res.status(200).json(playlists);
     } catch (error) {
         console.error('Failed to fetch public playlists:', error);
@@ -67,6 +74,8 @@ router.post('/private/add/:id', authMiddleware, async (req, res) => {
         const { id } = req.params; // Movie ID
         const userId = req.user.id; // User ID from auth middleware
 
+        console.log(`Adding movie ID ${id} to private playlist for user ${userId}`);
+
         // Fetch movie details from OMDB API
         const movieResponse = await axios.get(`https://www.omdbapi.com/?apikey=6f1b1840&i=${id}`);
         if (movieResponse.data.Response !== 'True') {
@@ -78,6 +87,8 @@ router.post('/private/add/:id', authMiddleware, async (req, res) => {
             title: movieResponse.data.Title,
             poster: movieResponse.data.Poster
         };
+
+        console.log('Movie details fetched:', movie);
 
         // Find the user's private playlist
         let playlist = await Playlist.findOne({ userId, isPublic: false });
@@ -98,6 +109,8 @@ router.post('/private/add/:id', authMiddleware, async (req, res) => {
             playlist.movies.push(movie);
         }
 
+        console.log('Saving playlist:', playlist);
+
         await playlist.save();
         res.json(playlist);
     } catch (err) {
@@ -110,7 +123,9 @@ router.post('/private/add/:id', authMiddleware, async (req, res) => {
 router.get('/private', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
+        console.log(`Fetching private playlists for user ${userId}`);
         const privatePlaylists = await Playlist.find({ userId, isPublic: false }).populate('userId', 'username');
+        console.log('Private playlists fetched:', privatePlaylists);
         res.json(privatePlaylists);
     } catch (err) {
         console.error('Failed to fetch private playlists', err);
@@ -124,9 +139,7 @@ router.delete('/public/:playlistId/:movieId', authMiddleware, async (req, res) =
         const { playlistId, movieId } = req.params;
         const userId = req.user.id;
 
-        console.log('Deleting movie:', movieId);
-        console.log('From playlist:', playlistId);
-        console.log('User ID:', userId);
+        console.log(`Deleting movie ID ${movieId} from public playlist ID ${playlistId} for user ${userId}`);
 
         // Find the public playlist owned by the user
         const playlist = await Playlist.findOne({ _id: playlistId, userId, isPublic: true });
@@ -134,8 +147,6 @@ router.delete('/public/:playlistId/:movieId', authMiddleware, async (req, res) =
             console.log('Public playlist not found');
             return res.status(404).json({ msg: 'Public playlist not found' });
         }
-
-        console.log('Found playlist:', playlist);
 
         // Remove the movie from the playlist
         playlist.movies = playlist.movies.filter(movie => movie.imdbID !== movieId);
@@ -150,12 +161,13 @@ router.delete('/public/:playlistId/:movieId', authMiddleware, async (req, res) =
     }
 });
 
-
 // Delete movie from private playlist
 router.delete('/private/:playlistId/:movieId', authMiddleware, async (req, res) => {
     try {
         const { playlistId, movieId } = req.params;
         const userId = req.user.id;
+
+        console.log(`Deleting movie ID ${movieId} from private playlist ID ${playlistId} for user ${userId}`);
 
         // Find the private playlist owned by the user
         const playlist = await Playlist.findOne({ _id: playlistId, userId, isPublic: false });
@@ -166,6 +178,8 @@ router.delete('/private/:playlistId/:movieId', authMiddleware, async (req, res) 
         // Remove the movie from the playlist
         playlist.movies = playlist.movies.filter(movie => movie.imdbID !== movieId);
 
+        console.log('Playlist after deletion:', playlist);
+
         await playlist.save();
         res.json(playlist);
     } catch (err) {
@@ -173,7 +187,5 @@ router.delete('/private/:playlistId/:movieId', authMiddleware, async (req, res) 
         res.status(500).send('Server Error');
     }
 });
-
-
 
 module.exports = router;
