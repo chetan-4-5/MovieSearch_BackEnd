@@ -14,19 +14,19 @@ const authMiddleware = async (req, res, next) => {
         const secret = process.env.JWT_SECRET;
         console.log('JWT Secret:', secret);  // Verify the secret is being read
 
-        // The decoded object will contain the 'id' property, not 'user.id'
         const decoded = jwt.verify(token, secret);
         console.log('Decoded Token:', decoded);
 
-        // Use 'decoded.id' instead of 'decoded.user.id'
+        // Find the user by ID from the token payload
         const user = await User.findById(decoded.id).select('-password');
         if (!user) {
             console.log('User not found');
             return res.status(401).json({ msg: 'User not found' });
         }
 
+        // Attach user object to the request for further use in route handlers
         req.user = user;
-        next();
+        next();  // Move to the next middleware or route handler
     } catch (error) {
         console.error('Token verification error:', error.message);
         if (error.name === 'TokenExpiredError') {
